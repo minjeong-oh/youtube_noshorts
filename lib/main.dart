@@ -6,16 +6,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:ui' as ui;
 
 // 웹 지원을 위한 import
-//import 'package:webview_flutter/webview_flutter.dart';
-//import 'package:webview_flutter_web/webview_flutter_web.dart';
-
-import 'auth_service.dart'; // GoogleAuthService 가져오기
-import 'package:google_sign_in/google_sign_in.dart';
-import 'package:flutter_inappwebview/flutter_inappwebview.dart'; // JavaScript와 연동
+import 'package:webview_flutter/webview_flutter.dart';
+import 'package:webview_flutter_web/webview_flutter_web.dart';
 
 void main() {
   // 웹 플랫폼 초기화
-  //WebViewPlatform.instance = WebWebViewPlatform();
+  WebViewPlatform.instance = WebWebViewPlatform();
 
   runApp(const MyApp());
 }
@@ -23,35 +19,20 @@ void main() {
 // ------------------
 // 1) 메인 검색 화면
 // ------------------
-class MyApp extends StatefulWidget {
+class MyApp extends StatelessWidget {
   const MyApp({Key? key}) : super(key: key);
-
-  @override
-  _MyAppState createState() => _MyAppState();
-}
-
-class _MyAppState extends State<MyApp> {
-
-  @override
-  void initState() {
-    super.initState();
-  }
-
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Youtube NoShorts',
-      theme: ThemeData(
-        primarySwatch: Colors.red,
-        scaffoldBackgroundColor: const Color(0xFFFAFAFA), // 유튜브의 실제 배경색
+      theme: ThemeData(primarySwatch: Colors.red,
+       scaffoldBackgroundColor: const Color(0xFFFAFAFA), // 유튜브의 실제 배경색
       ),
-      home: MainSearchScreen(), 
+      home: const MainSearchScreen(),
     );
   }
 }
-
-
 
 class MainSearchScreen extends StatefulWidget {
   const MainSearchScreen({Key? key}) : super(key: key);
@@ -67,47 +48,12 @@ class _MainSearchScreenState extends State<MainSearchScreen> {
   String _lastDate = ''; // ✅ 마지막 기록 날짜
   bool _isLoading = false; // ✅ 로딩 상태 추가
   List<dynamic> _searchResults = []; // ✅ 검색 결과 리스트 추가
-  // static const _apiKey = String.fromEnvironment('API_KEY');
-
-  //   final GoogleSignIn _googleSignIn = GoogleSignIn(
-  //   clientId: "328478700679-ejq47jsqb20lmurbac9tsnr651557mkc.apps.googleusercontent.com", // 여기에 클라이언트 ID 입력
-  //   scopes: ['https://www.googleapis.com/auth/youtube.readonly'],
-  // );
-
-  String? _currentUser;
-
-  // 구글 로그인 객체 생성
   static const _apiKey = String.fromEnvironment('API_KEY');
-
-  final GoogleSignIn _googleSignIn =
-      GoogleSignIn(scopes: ["email", "profile", "openid"]);
-  late InAppWebViewController _webViewController;
-
   @override
   void initState() {
     super.initState();
     _loadCounts();
-    _setupJavaScriptHandler();
-
   }
-
-  void _setupJavaScriptHandler() {
-    // WebViewController 대신 InAppWebViewController 사용
-    _webViewController.addJavaScriptHandler(
-      handlerName: 'handleGoogleLogin',
-      callback: (args) {
-        setState(() {
-          _currentUser = args[0]; // idToken 저장
-        });
-        print("Google 로그인 성공, ID Token: $_currentUser");
-      },
-    );
-  }
-   void _handleSignIn() {
-    // JavaScript의 Google 로그인 함수 호출
-    _webViewController.evaluateJavascript(source: "signInWithGoogle();");
-  }
-
 
   Future<void> _loadCounts() async {
     final prefs = await SharedPreferences.getInstance();
@@ -162,11 +108,6 @@ class _MainSearchScreenState extends State<MainSearchScreen> {
     });
 
     try {
-      final String? accessToken = await GoogleAuthService().getAccessToken();
-      if (accessToken == null) {
-        throw Exception("User not authenticated");
-      }
-
       final url = Uri.parse(
         'https://www.googleapis.com/youtube/v3/search'
         '?part=snippet'
@@ -176,15 +117,7 @@ class _MainSearchScreenState extends State<MainSearchScreen> {
         '&key=$_apiKey'
       );
 
-      final response = await http.get(
-        url,
-        headers: {
-          "Authorization": "Bearer $accessToken", // OAuth 인증 추가
-          "Accept": "application/json"
-        },
-      );
-
-      //final response = await http.get(url);
+      final response = await http.get(url);
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body) as Map<String, dynamic>;
@@ -227,11 +160,7 @@ class _MainSearchScreenState extends State<MainSearchScreen> {
   }
 
   @override
-  Widget build(BuildContext context) { 
-    
-    // 사용자가 로그인한 상태인지 확인
-    final bool isLoggedIn = _currentUser != null;
-
+  Widget build(BuildContext context) {
     return Scaffold(
       body: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 10),
@@ -274,7 +203,7 @@ class _MainSearchScreenState extends State<MainSearchScreen> {
 
                   const Text(
                     'Search Only What you need',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    style: TextStyle(fontSize: 20),
                   ),
                   const SizedBox(height: 20),
                 ],
@@ -290,6 +219,7 @@ class _MainSearchScreenState extends State<MainSearchScreen> {
                   children: [
                     // 로고 이미지
                     Container(
+                      
                       margin: const EdgeInsets.only(right: 10), // 로고와 검색창 사이 간격
                       child: Image.asset(
                         'assets/images/icon_youtube.png',
@@ -301,9 +231,9 @@ class _MainSearchScreenState extends State<MainSearchScreen> {
                     const SizedBox(width: 10), // 검색창과 버튼 사이 간격
                     // 검색창
                     ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 800),
+                      constraints: const BoxConstraints(maxWidth: 1000),
                       child: SizedBox(
-                        width: 500,
+                        width: 700,
                         child: TextField(
                           controller: _searchController,
                           decoration: InputDecoration(
@@ -324,16 +254,11 @@ class _MainSearchScreenState extends State<MainSearchScreen> {
                     Container(
                       height: 50,
                       child: ElevatedButton.icon(
-                        onPressed: isLoggedIn ? _onSearch : _handleSignIn,
-                        icon: Icon(
-                          Icons.search, // 로그인 전에는 로그인 아이콘, 후에는 검색 아이콘
-                          size: 20,
-                          color: Colors.white,
-                        ),
-                        label: Text(
-                         
-                          isLoggedIn ? '검색' : '구글 로그인',
-                          style: const TextStyle(
+                        onPressed: _onSearch,
+                        icon: const Icon(Icons.search, size: 20, color: Colors.white), // 돋보기 아이콘 추가
+                        label: const Text(
+                          '검색',
+                          style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w500,
                             color: Colors.white,
