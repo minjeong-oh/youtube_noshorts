@@ -31,26 +31,7 @@
 
   <title>youtube_noshorts</title>
   <link rel="manifest" href="manifest.json">
-  
-  <!-- Google Identity Services SDK 추가 -->
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
-
-  <script>
-    function signInWithGoogle() {
-      google.accounts.id.initialize({
-        client_id: "328478700679-ejq47jsqb20lmurbac9tsnr651557mkc.apps.googleusercontent.com",
-        callback: handleCredentialResponse
-      });
-
-      google.accounts.id.prompt(); // Google 로그인 창 표시
-    }
-
-    function handleCredentialResponse(response) {
-      console.log("Google 로그인 성공: ", response);
-      let idToken = response.credential; // idToken 값
-      window.flutter_inappwebview.callHandler('handleGoogleLogin', idToken);
-    }
-  </script>
+ 
 </head>
 <body>
   <script src="flutter_bootstrap.js" async></script>
