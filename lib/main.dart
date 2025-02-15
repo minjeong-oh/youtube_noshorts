@@ -31,17 +31,58 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  final GoogleSignIn _googleSignIn = GoogleSignIn(
+
+  @override
+  void initState() {
+    super.initState();
+  }
+
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Youtube NoShorts',
+      theme: ThemeData(
+        primarySwatch: Colors.red,
+        scaffoldBackgroundColor: const Color(0xFFFAFAFA), // 유튜브의 실제 배경색
+      ),
+      home: MainSearchScreen(), // 로그인된 경우 메인 화면
+    );
+  }
+}
+
+
+
+class MainSearchScreen extends StatefulWidget {
+  const MainSearchScreen({Key? key}) : super(key: key);
+
+  @override
+  State<MainSearchScreen> createState() => _MainSearchScreenState();
+}
+
+class _MainSearchScreenState extends State<MainSearchScreen> {
+  final TextEditingController _searchController = TextEditingController();
+  int _searchCount = 0; // ✅ 오늘 검색 횟수
+  int _videoViewCount = 0; // ✅ 오늘 본 영상 횟수
+  String _lastDate = ''; // ✅ 마지막 기록 날짜
+  bool _isLoading = false; // ✅ 로딩 상태 추가
+  List<dynamic> _searchResults = []; // ✅ 검색 결과 리스트 추가
+  static const _apiKey = String.fromEnvironment('API_KEY');
+
+    final GoogleSignIn _googleSignIn = GoogleSignIn(
     clientId: "328478700679-ejq47jsqb20lmurbac9tsnr651557mkc.apps.googleusercontent.com", // 여기에 클라이언트 ID 입력
     scopes: ['https://www.googleapis.com/auth/youtube.readonly'],
   );
 
   GoogleSignInAccount? _user;
 
+
   @override
   void initState() {
     super.initState();
+    _loadCounts();
     _checkSignInStatus();
+
   }
 
   // 자동 로그인 확인
@@ -64,62 +105,6 @@ class _MyAppState extends State<MyApp> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Youtube NoShorts',
-      theme: ThemeData(
-        primarySwatch: Colors.red,
-        scaffoldBackgroundColor: const Color(0xFFFAFAFA), // 유튜브의 실제 배경색
-      ),
-      home: _user == null
-          ? LoginScreen(onSignIn: _handleSignIn) // 로그인되지 않으면 로그인 화면
-          : const MainSearchScreen(), // 로그인된 경우 메인 화면
-    );
-  }
-}
-
-// 로그인 화면 위젯
-class LoginScreen extends StatelessWidget {
-  final VoidCallback onSignIn;
-
-  const LoginScreen({Key? key, required this.onSignIn}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text("Google 로그인")),
-      body: Center(
-        child: ElevatedButton(
-          onPressed: onSignIn,
-          child: const Text("Google 로그인"),
-        ),
-      ),
-    );
-  }
-}
-
-
-class MainSearchScreen extends StatefulWidget {
-  const MainSearchScreen({Key? key}) : super(key: key);
-
-  @override
-  State<MainSearchScreen> createState() => _MainSearchScreenState();
-}
-
-class _MainSearchScreenState extends State<MainSearchScreen> {
-  final TextEditingController _searchController = TextEditingController();
-  int _searchCount = 0; // ✅ 오늘 검색 횟수
-  int _videoViewCount = 0; // ✅ 오늘 본 영상 횟수
-  String _lastDate = ''; // ✅ 마지막 기록 날짜
-  bool _isLoading = false; // ✅ 로딩 상태 추가
-  List<dynamic> _searchResults = []; // ✅ 검색 결과 리스트 추가
-  static const _apiKey = String.fromEnvironment('API_KEY');
-  @override
-  void initState() {
-    super.initState();
-    _loadCounts();
-  }
 
   Future<void> _loadCounts() async {
     final prefs = await SharedPreferences.getInstance();
@@ -332,11 +317,15 @@ class _MainSearchScreenState extends State<MainSearchScreen> {
                     Container(
                       height: 50,
                       child: ElevatedButton.icon(
-                        onPressed: _onSearch,
-                        icon: const Icon(Icons.search, size: 20, color: Colors.white), // 돋보기 아이콘 추가
-                        label: const Text(
-                          '검색',
-                          style: TextStyle(
+                        onPressed: _user == null ? _handleSignIn : _onSearch, // 로그인 여부에 따라 버튼 동작 변경
+                        icon: Icon(
+                          Icons.search, // 로그인 전에는 로그인 아이콘, 후에는 검색 아이콘
+                          size: 20,
+                          color: Colors.white,
+                        ),
+                        label: Text(
+                          _user == null ? 'Google 로그인' : '검색', // 로그인 전에는 "Google 로그인", 후에는 "검색"
+                          style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w500,
                             color: Colors.white,
