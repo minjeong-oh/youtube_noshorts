@@ -9,6 +9,10 @@ import 'dart:ui' as ui;
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:webview_flutter_web/webview_flutter_web.dart';
 
+import 'auth_service.dart'; // GoogleAuthService 가져오기
+import 'package:google_sign_in/google_sign_in.dart';
+
+
 void main() {
   // 웹 플랫폼 초기화
   WebViewPlatform.instance = WebWebViewPlatform();
@@ -19,20 +23,82 @@ void main() {
 // ------------------
 // 1) 메인 검색 화면
 // ------------------
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({Key? key}) : super(key: key);
+
+  @override
+  _MyAppState createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  final GoogleSignIn _googleSignIn = GoogleSignIn(
+    clientId: "328478700679-ejq47jsqb20lmurbac9tsnr651557mkc.apps.googleusercontent.com", // 여기에 클라이언트 ID 입력
+    scopes: ['https://www.googleapis.com/auth/youtube.readonly'],
+  );
+
+  GoogleSignInAccount? _user;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkSignInStatus();
+  }
+
+  // 자동 로그인 확인
+  void _checkSignInStatus() async {
+    final user = await _googleSignIn.signInSilently();
+    setState(() {
+      _user = user;
+    });
+  }
+
+  // 로그인 버튼 클릭 시 실행
+  void _handleSignIn() async {
+    try {
+      final user = await _googleSignIn.signIn();
+      setState(() {
+        _user = user;
+      });
+    } catch (error) {
+      print("로그인 오류: $error");
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Youtube NoShorts',
-      theme: ThemeData(primarySwatch: Colors.red,
-       scaffoldBackgroundColor: const Color(0xFFFAFAFA), // 유튜브의 실제 배경색
+      theme: ThemeData(
+        primarySwatch: Colors.red,
+        scaffoldBackgroundColor: const Color(0xFFFAFAFA), // 유튜브의 실제 배경색
       ),
-      home: const MainSearchScreen(),
+      home: _user == null
+          ? LoginScreen(onSignIn: _handleSignIn) // 로그인되지 않으면 로그인 화면
+          : const MainSearchScreen(), // 로그인된 경우 메인 화면
     );
   }
 }
+
+// 로그인 화면 위젯
+class LoginScreen extends StatelessWidget {
+  final VoidCallback onSignIn;
+
+  const LoginScreen({Key? key, required this.onSignIn}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text("Google 로그인")),
+      body: Center(
+        child: ElevatedButton(
+          onPressed: onSignIn,
+          child: const Text("Google 로그인"),
+        ),
+      ),
+    );
+  }
+}
+
 
 class MainSearchScreen extends StatefulWidget {
   const MainSearchScreen({Key? key}) : super(key: key);
@@ -108,6 +174,11 @@ class _MainSearchScreenState extends State<MainSearchScreen> {
     });
 
     try {
+      final String? accessToken = await GoogleAuthService().getAccessToken();
+      if (accessToken == null) {
+        throw Exception("User not authenticated");
+      }
+
       final url = Uri.parse(
         'https://www.googleapis.com/youtube/v3/search'
         '?part=snippet'
@@ -117,7 +188,15 @@ class _MainSearchScreenState extends State<MainSearchScreen> {
         '&key=$_apiKey'
       );
 
-      final response = await http.get(url);
+      final response = await http.get(
+        url,
+        headers: {
+          "Authorization": "Bearer $accessToken", // OAuth 인증 추가
+          "Accept": "application/json"
+        },
+      );
+
+      //final response = await http.get(url);
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body) as Map<String, dynamic>;
@@ -203,7 +282,7 @@ class _MainSearchScreenState extends State<MainSearchScreen> {
 
                   const Text(
                     'Search Only What you need',
-                    style: TextStyle(fontSize: 20),
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 20),
                 ],
