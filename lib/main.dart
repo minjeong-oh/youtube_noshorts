@@ -79,9 +79,11 @@ class _MainSearchScreenState extends State<MainSearchScreen> {
   // 구글 로그인 객체 생성
   static const _apiKey = String.fromEnvironment('API_KEY');
 
-    final GoogleSignIn _googleSignIn = GoogleSignIn(
+  final GoogleSignIn _googleSignIn = GoogleSignIn(
     clientId: "328478700679-ejq47jsqb20lmurbac9tsnr651557mkc.apps.googleusercontent.com", // 여기에 클라이언트 ID 입력
-    scopes: ['https://www.googleapis.com/auth/youtube.readonly'],
+    scopes: <String>[
+    'email'
+    ],
   );
 
   GoogleSignInAccount? _currentUser;
