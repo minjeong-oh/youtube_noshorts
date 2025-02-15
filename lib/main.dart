@@ -46,7 +46,7 @@ class _MyAppState extends State<MyApp> {
         primarySwatch: Colors.red,
         scaffoldBackgroundColor: const Color(0xFFFAFAFA), // 유튜브의 실제 배경색
       ),
-      home: MainSearchScreen(), // 로그인된 경우 메인 화면
+      home: MainSearchScreen(), 
     );
   }
 }
@@ -97,7 +97,9 @@ class _MainSearchScreenState extends State<MainSearchScreen> {
   void _handleSignIn() async {
     try {
       final user = await _googleSignIn.signIn();
+      print("user : ${user}");
       setState(() {
+        print("로그인 성공!: ${user?.displayName}");
         _user = user;
       });
     } catch (error) {

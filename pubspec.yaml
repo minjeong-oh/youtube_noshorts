@@ -34,7 +34,7 @@ dependencies:
   shared_preferences: ^2.5.2
   shared_preferences_web: ^2.4.2
   google_sign_in: ^6.2.2
-
+  google_sign_in_web: ^0.12.4+3  # 웹용 패키지 추가
   
 
 dev_dependencies:
