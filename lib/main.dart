@@ -6,16 +6,16 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:ui' as ui;
 
 // 웹 지원을 위한 import
-import 'package:webview_flutter/webview_flutter.dart';
-import 'package:webview_flutter_web/webview_flutter_web.dart';
+//import 'package:webview_flutter/webview_flutter.dart';
+//import 'package:webview_flutter_web/webview_flutter_web.dart';
 
 import 'auth_service.dart'; // GoogleAuthService 가져오기
 import 'package:google_sign_in/google_sign_in.dart';
-
+import 'package:flutter_inappwebview/flutter_inappwebview.dart'; // JavaScript와 연동
 
 void main() {
   // 웹 플랫폼 초기화
-  WebViewPlatform.instance = WebWebViewPlatform();
+  //WebViewPlatform.instance = WebWebViewPlatform();
 
   runApp(const MyApp());
 }
@@ -74,46 +74,38 @@ class _MainSearchScreenState extends State<MainSearchScreen> {
   //   scopes: ['https://www.googleapis.com/auth/youtube.readonly'],
   // );
 
-  //GoogleSignInAccount? _user;
+  String? _currentUser;
 
   // 구글 로그인 객체 생성
   static const _apiKey = String.fromEnvironment('API_KEY');
 
-  final GoogleSignIn _googleSignIn = GoogleSignIn(
-    clientId: "328478700679-ejq47jsqb20lmurbac9tsnr651557mkc.apps.googleusercontent.com", // 여기에 클라이언트 ID 입력
-    scopes: <String>[
-    'email'
-    ],
-  );
-
-  GoogleSignInAccount? _currentUser;
+  final GoogleSignIn _googleSignIn =
+      GoogleSignIn(scopes: ["email", "profile", "openid"]);
+  late InAppWebViewController _webViewController;
 
   @override
   void initState() {
     super.initState();
     _loadCounts();
-    _checkSignInStatus();
+    _setupJavaScriptHandler();
 
   }
 
-  // 현재 로그인 상태가 바뀔 때마다 호출되는 리스너
-  void _checkSignInStatus() async {
-    _googleSignIn.onCurrentUserChanged.listen((GoogleSignInAccount? account) {
-      setState(() {
-        _currentUser = account;
-      });
-    });
-    // 자동 로그인(이미 로그인되어 있었다면 로그인 유지)
-    _googleSignIn.signInSilently();
+  void _setupJavaScriptHandler() {
+    // WebViewController 대신 InAppWebViewController 사용
+    _webViewController.addJavaScriptHandler(
+      handlerName: 'handleGoogleLogin',
+      callback: (args) {
+        setState(() {
+          _currentUser = args[0]; // idToken 저장
+        });
+        print("Google 로그인 성공, ID Token: $_currentUser");
+      },
+    );
   }
-
-   // 구글 로그인 처리 함수
-  Future<void> _handleSignIn() async {
-    try {
-      await _googleSignIn.signIn();
-    } catch (error) {
-      debugPrint('구글 로그인 에러: $error');
-    }
+   void _handleSignIn() {
+    // JavaScript의 Google 로그인 함수 호출
+    _webViewController.evaluateJavascript(source: "signInWithGoogle();");
   }
 
 
