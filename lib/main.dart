@@ -209,75 +209,81 @@ class _MainSearchScreenState extends State<MainSearchScreen> {
                 ],
               ),
             ),
-            // 검색창 + 검색 버튼을 한 줄(Row)로 배치, 작은 화면에서는 자동 줄 바꿈
             Center(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    // 로고 이미지
-                    Container(
-                      
-                      margin: const EdgeInsets.only(right: 10), // 로고와 검색창 사이 간격
-                      child: Image.asset(
-                        'assets/images/icon_youtube.png',
-                        width: 60, // 너비만 설정 (비율 유지)
-                        fit: BoxFit.contain, // 원본 비율 유지하며 크기 조정
-                        filterQuality: FilterQuality.high, // 화질 유지
-                      ),
-                    ),
-                    const SizedBox(width: 10), // 검색창과 버튼 사이 간격
-                    // 검색창
-                    ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 1000),
-                      child: SizedBox(
-                        width: 700,
-                        child: TextField(
-                          controller: _searchController,
-                          decoration: InputDecoration(
-                            hintText: 'YouTube 검색어를 입력하세요',
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(30),
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    double maxWidth = constraints.maxWidth; // 현재 화면의 최대 너비 가져오기
+                    double searchFieldWidth = maxWidth > 800 ? 700 : maxWidth * 0.7; // 너비 조정
+                    bool isSmallScreen = maxWidth < 600; // 작은 화면 기준
+
+                    return Wrap(
+                      alignment: WrapAlignment.center,
+                      spacing: 10, // 요소 간 간격
+                      runSpacing: 10, // 줄바꿈 시 간격
+                      children: [
+                        // 로고 이미지
+                        Container(
+                          margin: const EdgeInsets.only(right: 10),
+                          child: Image.asset(
+                            'assets/images/icon_youtube.png',
+                            width: isSmallScreen ? 40 : 60, // 작은 화면에서 로고 크기 조절
+                            fit: BoxFit.contain,
+                            filterQuality: FilterQuality.high,
+                          ),
+                        ),
+                        // 검색창
+                        ConstrainedBox(
+                          constraints: BoxConstraints(maxWidth: searchFieldWidth),
+                          child: SizedBox(
+                            width: searchFieldWidth,
+                            child: TextField(
+                              controller: _searchController,
+                              decoration: InputDecoration(
+                                hintText: 'YouTube 검색어를 입력하세요',
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(30),
+                                ),
+                                filled: true,
+                                fillColor: Colors.grey[100],
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                              ),
+                              onSubmitted: (_) => _onSearch(),
                             ),
-                            filled: true,
-                            fillColor: Colors.grey[100],
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-                          ),
-                          onSubmitted: (_) => _onSearch(),
-                        ),
-                      ),
-                    ),    
-                    const SizedBox(width: 10), // 검색창과 버튼 사이 간격
-                    // 검색 버튼 (돋보기 아이콘 추가)
-                    Container(
-                      height: 50,
-                      child: ElevatedButton.icon(
-                        onPressed: _onSearch,
-                        icon: const Icon(Icons.search, size: 20, color: Colors.white), // 돋보기 아이콘 추가
-                        label: const Text(
-                          '검색',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.white,
                           ),
                         ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF424242), // 버튼 색상
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(25),
+                        // 검색 버튼
+                        SizedBox(
+                          height: 50,
+                          child: ElevatedButton.icon(
+                            onPressed: _onSearch,
+                            icon: const Icon(Icons.search, size: 20, color: Colors.white),
+                            label: const Text(
+                              '검색',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.white,
+                              ),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF424242),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(25),
+                              ),
+                              elevation: 0,
+                              padding: const EdgeInsets.symmetric(horizontal: 20),
+                            ),
                           ),
-                          elevation: 0,
-                          padding: const EdgeInsets.symmetric(horizontal: 20),
                         ),
-                      ),
-                    ),
-                  ],
+                      ],
+                    );
+                  },
                 ),
               ),
             ),
+
               const SizedBox(height: 20),
 
             // ✅ 검색 결과 표시
