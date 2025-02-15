@@ -76,7 +76,6 @@ class _MainSearchScreenState extends State<MainSearchScreen> {
 
   GoogleSignInAccount? _user;
 
-
   @override
   void initState() {
     super.initState();
