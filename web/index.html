@@ -32,26 +32,6 @@
   <title>youtube_noshorts</title>
   <link rel="manifest" href="manifest.json">
 
-  <meta name="google-signin-client_id" content="328478700679-ejq47jsqb20lmurbac9tsnr651557mkc.apps.googleusercontent.com">
-
-  <!-- Google Identity Services SDK 추가 -->
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
-
-  <script>
-    function signInWithGoogle() {
-      google.accounts.id.initialize({
-        client_id: "328478700679-ejq47jsqb20lmurbac9tsnr651557mkc.apps.googleusercontent.com",
-        callback: handleCredentialResponse
-      });
-
-      google.accounts.id.prompt(); // Google 로그인 창 표시
-    }
-
-    function handleCredentialResponse(response) {
-      console.log("Google 로그인 성공: ", response);
-      // Flutter에서 로그인 정보 사용 가능
-    }
-  </script>
 
 </head>
 <body>

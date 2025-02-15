@@ -67,6 +67,16 @@ class _MainSearchScreenState extends State<MainSearchScreen> {
   String _lastDate = ''; // ✅ 마지막 기록 날짜
   bool _isLoading = false; // ✅ 로딩 상태 추가
   List<dynamic> _searchResults = []; // ✅ 검색 결과 리스트 추가
+  // static const _apiKey = String.fromEnvironment('API_KEY');
+
+  //   final GoogleSignIn _googleSignIn = GoogleSignIn(
+  //   clientId: "328478700679-ejq47jsqb20lmurbac9tsnr651557mkc.apps.googleusercontent.com", // 여기에 클라이언트 ID 입력
+  //   scopes: ['https://www.googleapis.com/auth/youtube.readonly'],
+  // );
+
+  //GoogleSignInAccount? _user;
+
+  // 구글 로그인 객체 생성
   static const _apiKey = String.fromEnvironment('API_KEY');
 
     final GoogleSignIn _googleSignIn = GoogleSignIn(
@@ -74,7 +84,7 @@ class _MainSearchScreenState extends State<MainSearchScreen> {
     scopes: ['https://www.googleapis.com/auth/youtube.readonly'],
   );
 
-  GoogleSignInAccount? _user;
+  GoogleSignInAccount? _currentUser;
 
   @override
   void initState() {
@@ -84,25 +94,23 @@ class _MainSearchScreenState extends State<MainSearchScreen> {
 
   }
 
-  // 자동 로그인 확인
+  // 현재 로그인 상태가 바뀔 때마다 호출되는 리스너
   void _checkSignInStatus() async {
-    final user = await _googleSignIn.signInSilently();
-    setState(() {
-      _user = user;
+    _googleSignIn.onCurrentUserChanged.listen((GoogleSignInAccount? account) {
+      setState(() {
+        _currentUser = account;
+      });
     });
+    // 자동 로그인(이미 로그인되어 있었다면 로그인 유지)
+    _googleSignIn.signInSilently();
   }
 
-  // 로그인 버튼 클릭 시 실행
-  void _handleSignIn() async {
+   // 구글 로그인 처리 함수
+  Future<void> _handleSignIn() async {
     try {
-      final user = await _googleSignIn.signIn();
-      print("user : ${user}");
-      setState(() {
-        print("로그인 성공!: ${user?.displayName}");
-        _user = user;
-      });
+      await _googleSignIn.signIn();
     } catch (error) {
-      print("로그인 오류: $error");
+      debugPrint('구글 로그인 에러: $error');
     }
   }
 
@@ -225,7 +233,11 @@ class _MainSearchScreenState extends State<MainSearchScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) { 
+    
+    // 사용자가 로그인한 상태인지 확인
+    final bool isLoggedIn = _currentUser != null;
+
     return Scaffold(
       body: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 10),
@@ -318,14 +330,15 @@ class _MainSearchScreenState extends State<MainSearchScreen> {
                     Container(
                       height: 50,
                       child: ElevatedButton.icon(
-                        onPressed: _user == null ? _handleSignIn : _onSearch, // 로그인 여부에 따라 버튼 동작 변경
+                        onPressed: isLoggedIn ? _onSearch : _handleSignIn,
                         icon: Icon(
                           Icons.search, // 로그인 전에는 로그인 아이콘, 후에는 검색 아이콘
                           size: 20,
                           color: Colors.white,
                         ),
                         label: Text(
-                          _user == null ? 'Google 로그인' : '검색', // 로그인 전에는 "Google 로그인", 후에는 "검색"
+                         
+                          isLoggedIn ? '검색' : '구글 로그인',
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w500,
