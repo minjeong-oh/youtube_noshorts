@@ -1,4 +1,4 @@
-# youtube_noshorts
+# Youtube No Shorts
 유튜브에서 필요한 정보만 검색해, 집중력을 지켜줄 수 있도록 웹 페이지를 제작하였습니다.
 
 
